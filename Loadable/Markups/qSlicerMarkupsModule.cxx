@@ -56,7 +56,7 @@
 
 // Markups logic includes
 #include "vtkSlicerMarkupsLogic.h"
-
+#include "qSlicerMarkupsSettingsPanel.h"
 // Markups widgets
 #include "qMRMLMarkupsAngleMeasurementsWidget.h"
 #include "qMRMLMarkupsCurveSettingsWidget.h"
@@ -251,7 +251,15 @@ void qSlicerMarkupsModule::setup()
 
   // Add toolbar
  // d->addToolBar();
-
+  if (qSlicerApplication::application())
+  {
+      qSlicerMarkupsSettingsPanel* panel =
+          new qSlicerMarkupsSettingsPanel;
+      //qSlicerApplication::application()->settingsDialog()->OptionRequireRestart
+      qSlicerApplication::application()->settingsDialog()->addPanel(
+          QStringLiteral("²âÁ¿"), panel);
+      panel->setMarkupsLogic(vtkSlicerMarkupsLogic::SafeDownCast(this->logic()));
+  }
   // Register Subject Hierarchy core plugins
   qSlicerSubjectHierarchyPluginHandler::instance()->registerPlugin(new qSlicerSubjectHierarchyMarkupsPlugin());
 }

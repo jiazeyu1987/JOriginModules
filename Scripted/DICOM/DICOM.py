@@ -88,7 +88,7 @@ This work is supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community.
             self.addMenu()
             # add the settings options
             self.settingsPanel = DICOMSettingsPanel()
-            slicer.app.settingsDialog().addPanel("DICOM", self.settingsPanel)
+            #slicer.app.settingsDialog().addPanel("DICOM", self.settingsPanel)
 
             layoutManager = slicer.app.layoutManager()
             layoutManager.layoutChanged.connect(self.onLayoutChanged)

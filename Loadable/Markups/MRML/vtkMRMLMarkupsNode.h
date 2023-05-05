@@ -31,7 +31,7 @@
 #include <vtkPointLocator.h>
 #include <vtkSmartPointer.h>
 #include <vtkVector.h>
-
+#include <vtkMRMLROINode.h>
 class vtkMatrix3x3;
 class vtkMRMLUnitNode;
 class vtkParallelTransportFrame;

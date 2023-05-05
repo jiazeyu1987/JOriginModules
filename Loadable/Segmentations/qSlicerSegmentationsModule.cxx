@@ -177,7 +177,7 @@ void qSlicerSegmentationsModule::setup()
   if (qSlicerApplication::application())
     {
     qSlicerSegmentationsSettingsPanel* panel = new qSlicerSegmentationsSettingsPanel();
-    qSlicerApplication::application()->settingsDialog()->addPanel("Segmentations", panel);
+    //qSlicerApplication::application()->settingsDialog()->addPanel("Segmentations", panel);
     panel->setSegmentationsLogic(segmentationsLogic);
     }
 

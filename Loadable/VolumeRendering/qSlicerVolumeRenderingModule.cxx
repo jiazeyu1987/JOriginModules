@@ -135,7 +135,7 @@ void qSlicerVolumeRenderingModule::setup()
   if (qSlicerApplication::application())
     {
     qSlicerVolumeRenderingSettingsPanel* panel = new qSlicerVolumeRenderingSettingsPanel;
-    qSlicerApplication::application()->settingsDialog()->addPanel("Volume rendering", panel);
+    qSlicerApplication::application()->settingsDialog()->addPanel(QStringLiteral("ÌåäÖÈ¾"), panel);
     panel->setVolumeRenderingLogic(volumeRenderingLogic);
     }
 

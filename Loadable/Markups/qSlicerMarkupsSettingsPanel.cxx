@@ -31,7 +31,12 @@
 // VTK includes
 #include <vtkNew.h>
 #include <vtkSmartPointer.h>
-
+#include <vtkMRMLScene.h>
+#include <vtkMRMLMarkupsNode.h>
+#include <vtkMRMLDisplayNode.h>
+#include <vtkMRMLMarkupsDisplayNode.h>
+#include <vtkMRMLMarkupsCurveNode.h>
+#include <qsettings.h>
 // --------------------------------------------------------------------------
 // qSlicerMarkupsSettingsPanelPrivate
 
@@ -101,7 +106,7 @@ void qSlicerMarkupsSettingsPanel
   qvtkReconnect(d->MarkupsLogic, logic, vtkCommand::ModifiedEvent,
                 this, SLOT(onMarkupsLogicModified()));
   d->MarkupsLogic = logic;
-
+   
   this->onMarkupsLogicModified();
 
   this->registerProperty("Markups/GlyphType", this,
@@ -110,8 +115,6 @@ void qSlicerMarkupsSettingsPanel
                          "defaultSelectedColor", SIGNAL(defaultSelectedColorChanged(QColor)));
   this->registerProperty("Markups/UnselectedColor", this,
                          "defaultUnselectedColor", SIGNAL(defaultUnselectedColorChanged(QColor)));
-  this->registerProperty("Markups/ActiveColor", this,
-                         "defaultActiveColor", SIGNAL(defaultActiveColorChanged(QColor)));
   this->registerProperty("Markups/GlyphScale", this,
                          "defaultGlyphScale", SIGNAL(defaultGlyphScaleChanged(double)));
   this->registerProperty("Markups/TextScale", this,
@@ -130,8 +133,7 @@ void qSlicerMarkupsSettingsPanel
   // update the gui to match the logic
   QString glyphType = QString(d->MarkupsLogic->GetDefaultMarkupsDisplayNodeGlyphTypeAsString().c_str());
 
-  QObject::connect(d->defaultGlyphTypeComboBox, SIGNAL(currentIndexChanged(int)),
-                   this, SLOT(onDefaultGlyphTypeChanged(int)),Qt::UniqueConnection);
+  
 
   // TODO: do I need to use the strings?
 //  d->defaultGlyphTypeComboBox->setCurrentIndex(glyphType - 1);
@@ -143,32 +145,39 @@ void qSlicerMarkupsSettingsPanel
 
 
   double *unselectedColor = d->MarkupsLogic->GetDefaultMarkupsDisplayNodeColor();
-  QObject::connect(d->defaultUnselectedColorPickerButton, SIGNAL(colorChanged(QColor)),
-                   this, SLOT(onDefaultUnselectedColorChanged(QColor)));
+  
   QColor qcolor = QColor::fromRgbF(unselectedColor[0], unselectedColor[1], unselectedColor[2]);
   d->defaultUnselectedColorPickerButton->setColor(qcolor);
 
   double *selectedColor =  d->MarkupsLogic->GetDefaultMarkupsDisplayNodeSelectedColor();
-  QObject::connect(d->defaultSelectedColorPickerButton, SIGNAL(colorChanged(QColor)),
-                   this, SLOT(onDefaultSelectedColorChanged(QColor)),Qt::UniqueConnection);
+  
   qcolor = QColor::fromRgbF(selectedColor[0], selectedColor[1], selectedColor[2]);
   d->defaultSelectedColorPickerButton->setColor(qcolor);
 
   double glyphScale = d->MarkupsLogic->GetDefaultMarkupsDisplayNodeGlyphScale();
-  QObject::connect(d->defaultGlyphScaleSliderWidget, SIGNAL(valueChanged(double)),
-                   this, SLOT(onDefaultGlyphScaleChanged(double)),Qt::UniqueConnection);
   d->defaultGlyphScaleSliderWidget->setValue(glyphScale);
 
-  double textScale = d->MarkupsLogic->GetDefaultMarkupsDisplayNodeTextScale();
-  QObject::connect(d->defaultTextScaleSliderWidget, SIGNAL(valueChanged(double)),
-                   this, SLOT(onDefaultTextScaleChanged(double)),Qt::UniqueConnection);
+  
   d->defaultTextScaleSliderWidget->setValue(textScale);
 
   double opacity = d->MarkupsLogic->GetDefaultMarkupsDisplayNodeOpacity();
-  QObject::connect(d->defaultOpacitySliderWidget, SIGNAL(valueChanged(double)),
-                   this, SLOT(onDefaultOpacityChanged(double)),Qt::UniqueConnection);
+  
   d->defaultOpacitySliderWidget->setValue(opacity);
   */
+  QObject::connect(d->defaultOpacitySliderWidget, SIGNAL(valueChanged(double)),
+      this, SLOT(onDefaultOpacityChanged(double)), Qt::UniqueConnection);
+  QObject::connect(d->defaultSelectedColorPickerButton, SIGNAL(colorChanged(QColor)),
+      this, SLOT(onDefaultSelectedColorChanged(QColor)), Qt::UniqueConnection);
+  QObject::connect(d->defaultTextScaleSliderWidget, SIGNAL(valueChanged(double)),
+      this, SLOT(onDefaultTextScaleChanged(double)), Qt::UniqueConnection);
+  QObject::connect(d->defaultGlyphScaleSliderWidget, SIGNAL(valueChanged(double)),
+      this, SLOT(onDefaultGlyphScaleChanged(double)), Qt::UniqueConnection);
+  QObject::connect(d->defaultGlyphTypeComboBox, SIGNAL(currentIndexChanged(int)),
+      this, SLOT(onDefaultGlyphTypeChanged(int)), Qt::UniqueConnection);
+  QObject::connect(d->defaultUnselectedColorPickerButton, SIGNAL(colorChanged(QColor)),
+      this, SLOT(onDefaultUnselectedColorChanged(QColor)));
+  //QObject::connect(d->defaultCurveTypeComboBox, SIGNAL(currentIndexChanged(int)),
+    //  this, SLOT(onDefaultCurveTypeChanged(int)), Qt::UniqueConnection);
 }
 
 // --------------------------------------------------------------------------
@@ -206,15 +215,7 @@ QColor qSlicerMarkupsSettingsPanel::defaultSelectedColor()const
   return color;
 }
 
-// --------------------------------------------------------------------------
-QColor qSlicerMarkupsSettingsPanel::defaultActiveColor()const
-{
-  Q_D(const qSlicerMarkupsSettingsPanel);
 
-  QColor color = d->defaultActiveColorPickerButton->color();
-
-  return color;
-}
 
 // --------------------------------------------------------------------------
 double qSlicerMarkupsSettingsPanel::defaultGlyphScale()const
@@ -275,13 +276,6 @@ void qSlicerMarkupsSettingsPanel::setDefaultSelectedColor(const QColor color)
   d->defaultSelectedColorPickerButton->setColor(color);
 }
 
-// --------------------------------------------------------------------------
-void qSlicerMarkupsSettingsPanel::setDefaultActiveColor(const QColor color)
-{
-  Q_D(qSlicerMarkupsSettingsPanel);
-
-  d->defaultActiveColorPickerButton->setColor(color);
-}
 
 // --------------------------------------------------------------------------
 void qSlicerMarkupsSettingsPanel::setDefaultGlyphScale(const double glyphScale)
@@ -310,11 +304,29 @@ void qSlicerMarkupsSettingsPanel::setDefaultOpacity(const double opacity)
 // --------------------------------------------------------------------------
 void qSlicerMarkupsSettingsPanel::onDefaultGlyphTypeChanged(int index)
 {
-//   Q_D(qSlicerMarkupsSettingsPanel);
-  Q_UNUSED(index);
-
-  this->updateMarkupsLogicDefaultGlyphType();
-  emit defaultGlyphTypeChanged(this->defaultGlyphType());
+    Q_D(qSlicerMarkupsSettingsPanel);
+  auto scene = d->MarkupsLogic->GetMRMLScene();
+  std::vector<vtkMRMLNode*> mNodes;
+  int nnodes = scene ? scene->GetNodesByClass("vtkMRMLMarkupsNode", mNodes) : 0;
+  for (int i = 0; i < nnodes; i++)
+  {
+      auto mNode = vtkMRMLMarkupsNode::SafeDownCast(mNodes[i]);
+      if (!mNode) {
+          continue;
+      }
+      auto displayNode = vtkMRMLMarkupsDisplayNode::SafeDownCast(mNode->GetDisplayNode());
+      if (!displayNode) {
+          continue;
+      }
+      displayNode->SetGlyphType(index);
+  }
+  QSettings settings;
+  settings.setValue("Markups/GlyphType", d->defaultGlyphTypeComboBox->currentText());
+  auto dn = d->MarkupsLogic->GetDefaultMarkupsDisplayNode();
+  if (dn) {
+      dn->SetGlyphType(index);
+  }
+  emit defaultGlyphTypeChanged(d->defaultGlyphTypeComboBox->currentText());
 }
 
 // --------------------------------------------------------------------------
@@ -330,12 +342,42 @@ void qSlicerMarkupsSettingsPanel::updateMarkupsLogicDefaultGlyphType()
   // d->MarkupsLogic->SetDefaultMarkupsDisplayNodeGlyphTypeFromString(this->defaultGlyphType().toUtf8());
 }
 
+
+
 // --------------------------------------------------------------------------
-void qSlicerMarkupsSettingsPanel::onDefaultUnselectedColorChanged(QColor color)
+void qSlicerMarkupsSettingsPanel::onDefaultSelectedColorChanged(QColor qcolor)
 {
-  Q_UNUSED(color);
-  this->updateMarkupsLogicDefaultUnselectedColor();
-  emit defaultUnselectedColorChanged(this->defaultUnselectedColor());
+    Q_D(qSlicerMarkupsSettingsPanel);
+
+    double color[3];
+
+    color[0] = qcolor.redF();
+    color[1] = qcolor.greenF();
+    color[2] = qcolor.blueF();
+
+    // disable it for now; if we want a settings panel then use the same pattern that is used for default view options
+    auto scene = d->MarkupsLogic->GetMRMLScene();
+    std::vector<vtkMRMLNode*> mNodes;
+    int nnodes = scene ? scene->GetNodesByClass("vtkMRMLMarkupsNode", mNodes) : 0;
+    for (int i = 0; i < nnodes; i++)
+    {
+        auto mNode = vtkMRMLMarkupsNode::SafeDownCast(mNodes[i]);
+        if (!mNode) {
+            continue;
+        }
+        auto displayNode = vtkMRMLMarkupsDisplayNode::SafeDownCast(mNode->GetDisplayNode());
+        if (!displayNode) {
+            continue;
+        }
+        displayNode->SetSelectedColor(color);
+    }
+    QSettings settings;
+    settings.setValue("Markups/SelectedColor", qcolor);
+    auto dn = d->MarkupsLogic->GetDefaultMarkupsDisplayNode();
+    if (dn) {
+        dn->SetSelectedColor(color);
+    }
+    emit(defaultSelectedColorChanged(qcolor));
 }
 
 // --------------------------------------------------------------------------
@@ -356,12 +398,58 @@ void qSlicerMarkupsSettingsPanel::updateMarkupsLogicDefaultUnselectedColor()
   Q_UNUSED(color);
 }
 
+
+void qSlicerMarkupsSettingsPanel::onDefaultCurveTypeChanged(int index) {
+    Q_D(qSlicerMarkupsSettingsPanel);
+    auto scene = d->MarkupsLogic->GetMRMLScene();
+    std::vector<vtkMRMLNode*> mNodes;
+    int nnodes = scene ? scene->GetNodesByClass("vtkMRMLMarkupsNode", mNodes) : 0;
+    for (int i = 0; i < nnodes; i++)
+    {
+        auto mNode = vtkMRMLMarkupsCurveNode::SafeDownCast(mNodes[i]);
+        if (!mNode) {
+            continue;
+        }
+        mNode->SetCurveType(index);
+    }
+    QSettings settings;
+    settings.setValue("Markups/CurveType", index);
+}
+
 // --------------------------------------------------------------------------
-void qSlicerMarkupsSettingsPanel::onDefaultSelectedColorChanged(QColor color)
+void qSlicerMarkupsSettingsPanel::onDefaultUnselectedColorChanged(QColor qcolor)
 {
-  Q_UNUSED(color);
-  this->updateMarkupsLogicDefaultSelectedColor();
-  emit defaultSelectedColorChanged(this->defaultSelectedColor());
+    Q_D(qSlicerMarkupsSettingsPanel);
+
+    double color[3];
+
+    color[0] = qcolor.redF();
+    color[1] = qcolor.greenF();
+    color[2] = qcolor.blueF();
+
+    // disable it for now; if we want a settings panel then use the same pattern that is used for default view options
+    auto scene = d->MarkupsLogic->GetMRMLScene();
+    std::vector<vtkMRMLNode*> mNodes;
+    int nnodes = scene ? scene->GetNodesByClass("vtkMRMLMarkupsNode", mNodes) : 0;
+    for (int i = 0; i < nnodes; i++)
+    {
+        auto mNode = vtkMRMLMarkupsNode::SafeDownCast(mNodes[i]);
+        if (!mNode) {
+            continue;
+        }
+        auto displayNode = vtkMRMLMarkupsDisplayNode::SafeDownCast(mNode->GetDisplayNode());
+        if (!displayNode) {
+            continue;
+        }
+        displayNode->SetActiveColor(color);
+    }
+    QSettings settings;
+    settings.setValue("Markups/UnselectedColor", qcolor);
+    auto dn = d->MarkupsLogic->GetDefaultMarkupsDisplayNode();
+    if (dn) {
+        dn->SetActiveColor(color);
+    }
+    emit(defaultUnselectedColorChanged(qcolor));
 }
 
 // --------------------------------------------------------------------------
@@ -369,25 +457,37 @@ void qSlicerMarkupsSettingsPanel::updateMarkupsLogicDefaultSelectedColor()
 {
   Q_D(qSlicerMarkupsSettingsPanel);
 
-  QColor qcolor = this->defaultSelectedColor();
-
-  double color[3];
-
-  color[0] = qcolor.redF();
-  color[1] = qcolor.greenF();
-  color[2] = qcolor.blueF();
-
-  // disable it for now; if we want a settings panel then use the same pattern that is used for default view options
-  // d->MarkupsLogic->SetDefaultMarkupsDisplayNodeSelectedColor(color);
-  Q_UNUSED(color);
 }
 
 // --------------------------------------------------------------------------
 void qSlicerMarkupsSettingsPanel::onDefaultGlyphScaleChanged(double scale)
 {
-  Q_UNUSED(scale);
-  this->updateMarkupsLogicDefaultGlyphScale();
+  
+  Q_D(qSlicerMarkupsSettingsPanel);
+
+  auto scene = d->MarkupsLogic->GetMRMLScene();
+  std::vector<vtkMRMLNode*> mNodes;
+  int nnodes = scene ? scene->GetNodesByClass("vtkMRMLMarkupsNode", mNodes) : 0;
+  for (int i = 0; i < nnodes; i++)
+  {
+      auto mNode = vtkMRMLMarkupsNode::SafeDownCast(mNodes[i]);
+      if (!mNode) {
+          continue;
+      }
+      auto displayNode = vtkMRMLMarkupsDisplayNode::SafeDownCast(mNode->GetDisplayNode());
+      if (!displayNode) {
+          continue;
+      }
+      displayNode->SetGlyphScale(scale);
+  }
+  QSettings settings;
+  settings.setValue("Markups/GlyphScale", scale);
+  auto dn = d->MarkupsLogic->GetDefaultMarkupsDisplayNode();
+  if (dn) {
+      dn->SetGlyphScale(scale);
+  }
   emit defaultGlyphScaleChanged(this->defaultGlyphScale());
+
 }
 
 // --------------------------------------------------------------------------
@@ -406,9 +506,31 @@ void qSlicerMarkupsSettingsPanel::updateMarkupsLogicDefaultGlyphScale()
 // --------------------------------------------------------------------------
 void qSlicerMarkupsSettingsPanel::onDefaultTextScaleChanged(double scale)
 {
-  Q_UNUSED(scale);
+  Q_D(qSlicerMarkupsSettingsPanel);
   this->updateMarkupsLogicDefaultTextScale();
-  emit defaultTextScaleChanged(this->defaultTextScale());
+  emit defaultTextScaleChanged(scale);
+
+  auto scene = d->MarkupsLogic->GetMRMLScene();
+  std::vector<vtkMRMLNode*> mNodes;
+  int nnodes = scene ? scene->GetNodesByClass("vtkMRMLMarkupsNode", mNodes) : 0;
+  for (int i = 0; i < nnodes; i++)
+  {
+      auto mNode = vtkMRMLMarkupsNode::SafeDownCast(mNodes[i]);
+      if (!mNode) {
+          continue;
+      }
+      auto displayNode = vtkMRMLMarkupsDisplayNode::SafeDownCast(mNode->GetDisplayNode());
+      if (!displayNode) {
+          continue;
+      }
+      displayNode->SetTextScale(scale);
+  }
+  QSettings settings;
+  settings.setValue("Markups/TextScale", scale);
+  auto dn = d->MarkupsLogic->GetDefaultMarkupsDisplayNode();
+  if (dn) {
+      dn->SetTextScale(scale);
+  }
 }
 
 // --------------------------------------------------------------------------
@@ -427,9 +549,30 @@ void qSlicerMarkupsSettingsPanel::updateMarkupsLogicDefaultTextScale()
 // --------------------------------------------------------------------------
 void qSlicerMarkupsSettingsPanel::onDefaultOpacityChanged(double opacity)
 {
-  Q_UNUSED(opacity);
-  this->updateMarkupsLogicDefaultOpacity();
-  emit defaultOpacityChanged(this->defaultOpacity());
+    Q_D(qSlicerMarkupsSettingsPanel);
+  
+  auto scene = d->MarkupsLogic->GetMRMLScene();
+  std::vector<vtkMRMLNode*> mNodes;
+  int nnodes = scene ? scene->GetNodesByClass("vtkMRMLMarkupsNode", mNodes) : 0;
+  for (int i = 0; i < nnodes; i++)
+  {
+      auto mNode = vtkMRMLMarkupsNode::SafeDownCast(mNodes[i]);
+      if (!mNode) {
+          continue;
+      }
+      auto displayNode = mNode->GetDisplayNode();
+      if (!displayNode) {
+          continue;
+      }
+      displayNode->SetOpacity(opacity);
+  }
+  QSettings settings;
+  settings.setValue("Markups/Opacity", opacity);
+  auto dn = d->MarkupsLogic->GetDefaultMarkupsDisplayNode();
+  if(dn){
+      dn->SetOpacity(opacity);
+  }
+  emit defaultOpacityChanged(opacity);
 }
 
 // --------------------------------------------------------------------------

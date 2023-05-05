@@ -121,8 +121,8 @@ void qSlicerUnitsModule::setup()
   if (logic && qSlicerApplication::application())
     {
     qSlicerUnitsSettingsPanel* panel = new qSlicerUnitsSettingsPanel;
-    qSlicerApplication::application()->settingsDialog()->addPanel(
-      "Units", panel);
+    //qSlicerApplication::application()->settingsDialog()->addPanel(
+     // "Units", panel);
     panel->setUnitsLogic(logic);
     }
 }

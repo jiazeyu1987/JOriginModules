@@ -63,7 +63,7 @@ public:
   QString defaultGlyphType() const;
   QColor defaultUnselectedColor() const;
   QColor defaultSelectedColor() const;
-  QColor defaultActiveColor() const;
+  QColor defaultActiveColor() const { return QColor(); };
   double defaultGlyphScale() const;
   double defaultTextScale() const;
   double defaultOpacity() const;
@@ -72,11 +72,11 @@ public slots:
   void setDefaultGlyphType(const QString& type);
   void setDefaultUnselectedColor(const QColor color);
   void setDefaultSelectedColor(const QColor color);
-  void setDefaultActiveColor(const QColor color);
+  void setDefaultActiveColor(const QColor color) {};
   void setDefaultGlyphScale(const double scale);
   void setDefaultTextScale(const double scale);
   void setDefaultOpacity(const double scale);
-
+  
 signals:
   void defaultGlyphTypeChanged(const QString&);
   void defaultUnselectedColorChanged(QColor);
@@ -106,7 +106,7 @@ protected slots:
 
   void onDefaultOpacityChanged(double);
   void updateMarkupsLogicDefaultOpacity();
-
+  void onDefaultCurveTypeChanged(int index);
 protected:
   QScopedPointer<qSlicerMarkupsSettingsPanelPrivate> d_ptr;
 

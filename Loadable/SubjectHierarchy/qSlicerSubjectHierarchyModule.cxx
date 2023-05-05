@@ -120,7 +120,7 @@ void qSlicerSubjectHierarchyModule::setup()
   if (qSlicerApplication::application())
     {
     qSlicerSubjectHierarchySettingsPanel* panel = new qSlicerSubjectHierarchySettingsPanel();
-    qSlicerApplication::application()->settingsDialog()->addPanel("Subject hierarchy", panel);
+    //qSlicerApplication::application()->settingsDialog()->addPanel("Subject hierarchy", panel);
     }
 }
 
